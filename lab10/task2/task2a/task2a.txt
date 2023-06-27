@@ -1,0 +1,25 @@
+Task 2a:
+
+The "Linking Script" is used by the "Linker" to determine which in which order the object files and libraries are linked together, aswell as other stuff such as the size and location of sections in the output file.
+
+this is what changes if we wont use the linking_script:
+
+Entry point address:
+NOT USED: 0x8049880
+USED: 0x4048b40
+
+Start of section headers:
+NOT USED: 19868 (bytes into file)
+USED: 11856 (bytes into file)
+
+Number of program headers:
+NOT USED: 9
+USED: 6
+
+Number of section headers:
+NOT USED: 28
+USED: 29
+
+Section header string table index:
+NOT USED: 27
+USED: 28

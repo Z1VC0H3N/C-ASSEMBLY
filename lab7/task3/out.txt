@@ -1,0 +1,2 @@
+has the right out
+ls

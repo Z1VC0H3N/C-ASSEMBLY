@@ -1,0 +1,166 @@
+#include <elf.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+char* retType(int type)
+{
+    char* typr_str = "Unknown Type";
+    switch (type)
+    {
+        case PT_NULL:
+            typr_str = "NULL";
+            break;
+        case PT_LOAD:
+            typr_str = "LOAD";
+            break;
+        case PT_DYNAMIC:
+            typr_str = "DYNAMIC";
+            break;
+        case PT_INTERP:
+            typr_str = "INTERP";
+            break;
+        case PT_NOTE:
+            typr_str = "NOTE";
+            break;
+        case PT_SHLIB:
+            typr_str = "SHLIB";
+            break;
+        case PT_PHDR:
+            typr_str = "PHDR";
+            break;
+        case PT_LOPROC:
+            typr_str = "LOPROC";
+            break;
+        case PT_HIPROC:
+            typr_str = "HIPROC";
+            break;
+        case PT_GNU_STACK:
+            typr_str = "GNU_STACK";
+            break;
+        default:
+            typr_str = "Unknown Type";
+            break;
+    }
+    return typr_str;
+}
+char* retFlag(int flag){
+    switch (flag)
+    {
+    case 1:
+        return "X";
+    case 2:
+        return "W";
+    case 3:
+        return "W X";
+    case 4:
+        return "R";
+    case 5:
+        return "R X";
+    case 6:
+        return "R W";
+    case 7:
+        return "R W X";
+    default:
+        break;
+    }
+}
+
+void* info(Elf32_Phdr * program_headers,int i){
+        write(1,"Program header number: ",23);
+        char number[32];
+        sprintf(number,"%d",i);
+        write(1,number,strlen(number));
+        write(1," ",1);
+        char address[32];
+        int len = snprintf(address,sizeof(address)+1,"Program header address %p\n",(void*) &program_headers[i]);
+        write(1,address,len-1);
+        write(1,"\n",1);
+}
+void* realInfo(Elf32_Phdr * program_headers,int i){
+    write(1,"\n",1);
+    write(1,"Program header number: ",23);
+    char number[32];
+    sprintf(number,"%d",i);
+    write(1,number,strlen(number));
+    write(1," ",1);
+    write(1,"\n",1);
+    char type[40];
+    char offset[40];
+    char virtAddr[40];
+    char physAddr[40];
+    char fileSiz[40];
+    char memSiz[40];
+    char flg [40] ;
+    char Align[40];
+    int lenType = snprintf(type,sizeof(type),"%u\n",(void*) program_headers[i].p_type);
+    int lenOffset = snprintf(offset,sizeof(type),"0x%06x\n",(void*) program_headers[i].p_offset);
+    int lenVirtAddr = snprintf(virtAddr,sizeof(type),"0x%06x\n",(void*) program_headers[i].p_vaddr);
+    int lenphysAddr = snprintf(physAddr,sizeof(type),"0x%06x\n",(void*) program_headers[i].p_paddr);
+    int lenFileSiz = snprintf(fileSiz,sizeof(type),"0x%06d\n",(void*) program_headers[i].p_filesz);
+    int lenMemSiz = snprintf(memSiz,sizeof(type),"0x%06d\n",(void*) program_headers[i].p_memsz);
+    int lenFlg = snprintf(flg,sizeof(type),"%d\n",(void*) program_headers[i].p_flags);
+    int lenAlign =  snprintf(Align,sizeof(type),"0x%x\n",(void*) program_headers[i].p_align);
+    char* t = retType(program_headers[i].p_type);
+    write(1,"Type: ",7);
+    write(1,t,strlen(t));
+    write(1,"\n",1);
+    write(1,"offset: ",9);
+    write(1,offset,lenOffset);
+    write(1,"virtAddr: ",11);
+    write(1,virtAddr,lenVirtAddr);
+    write(1,"physAddr: ",11);
+    write(1,physAddr,lenphysAddr);
+    write(1,"fileSiz: ",10);
+    write(1,fileSiz,lenFileSiz);
+    write(1,"memSiz: ",9);
+    write(1,memSiz,lenMemSiz);
+    char* f = retFlag(program_headers[i].p_flags);
+    write(1,"flags: ",8);
+    write(1,f,strlen(f));
+    write(1,"\n",1);
+    write(1,"align: ",8);
+    write(1,Align,lenAlign);
+
+   }
+
+int foreach_phdr(void *map_start, void (*func)(Elf32_Phdr *,int), int arg){
+    Elf32_Ehdr *ehdr = (Elf32_Ehdr *) map_start;
+    Elf32_Phdr *phdr_table = (Elf32_Phdr *) (map_start + ehdr->e_phoff);
+    write(1,"Type   Offset    VirtAddr    PhysAddr   FileSiz   MemSiz   Flg Align",69);
+    for (int i = 0; i < ehdr->e_phnum; i++) {
+        func(phdr_table, i);
+    }
+    return 0;
+}
+int main (int argc ,char** argv){
+    write(1,"Please enter file's name of a 32bit ELF formatted executable:\n",50);
+    write(1,"\n",1);
+    char* s1 = (char*) malloc(100);
+	read(0,s1,100);
+	s1[strlen(s1)-1] = '\0';
+	int fd = open(s1, O_RDONLY);
+    if (fd == -1) {
+        perror("Failed to open file");
+        return 0;
+    }
+    int size = lseek(fd, 0, SEEK_END) + 1 ;
+	lseek(fd,0,SEEK_SET);
+
+    void *map_start = mmap(NULL,size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (map_start == MAP_FAILED) {
+        perror("Failed to mmap file");
+        return 0;
+    }
+
+    int ret = foreach_phdr(map_start,realInfo, 0);
+
+    munmap(map_start, size);
+    close(fd);
+    free(s1);
+    return ret;
+}
+
+
+
+

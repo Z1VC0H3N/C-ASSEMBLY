@@ -1,0 +1,18 @@
+all : addresses base menu
+
+addresses: addresses.o
+	gcc -g -m32 -Wall -o addresses addresses.o
+addresses.o:
+	gcc -m32 -g -Wall -c -o addresses.o addresses.c
+base : base.o
+	gcc -g -m32 -Wall -o base base.o
+base.o:
+	gcc -m32 -g -Wall -c -o base.o base.c
+menu:
+	gcc -g -m32 -Wall -o menu menu.o
+menu.o:
+	gcc -m32 -g -Wall -c -o menu.o menu.c
+.PHONY:clean
+
+clean:
+	rm -f *.o  addresses base
